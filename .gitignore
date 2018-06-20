@@ -1,0 +1,12 @@
+ksocket/.*
+*/Module.symvers
+*/*.ko
+*/*.mod.c
+*/*.mod.o
+*/*.o
+*/modules.order
+master_device/.*
+slave_device/.*
+user_program/master
+user_program/slave
+
