@@ -12,6 +12,7 @@
 #define PAGE_SIZE 4096
 #define BUF_SIZE 512
 #define MAP_SIZE (PAGE_SIZE * 10)
+
 size_t get_filesize(const char* filename);//get the size of the input file
 int min(int a, int b) { return a < b ? a : b; }
 
@@ -73,10 +74,9 @@ int main (int argc, char* argv[])
 			for (i = 0; i < file_size; i += MAP_SIZE)
 			{
 				len = min(MAP_SIZE, file_size - i);
-				mapped_mem = mmap(NULL, len, PROT_READ, MAP_SHARED, file_fd, 0);
+				mapped_mem = mmap(NULL, len, PROT_READ, MAP_SHARED, file_fd, i);
 				for (j = 0; j < len; j += BUF_SIZE)
 					write(dev_fd, mapped_mem + j, min(BUF_SIZE, len - j));
-				printf("send\n");
 			}
 			break;
 	}

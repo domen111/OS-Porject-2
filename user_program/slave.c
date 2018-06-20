@@ -11,10 +11,14 @@
 
 #define PAGE_SIZE 4096
 #define BUF_SIZE 512
+#define MAP_SIZE (PAGE_SIZE * 10)
+
+int min(int a, int b) { return a < b ? a : b; }
+
 int main (int argc, char* argv[])
 {
 	char buf[BUF_SIZE];
-	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
+	int i, j, dev_fd, file_fd;// the fd for the device and the fd for the input file
 	size_t ret, file_size = 0, data_size = -1;
 	char file_name[50];
 	char method[20];
@@ -23,6 +27,7 @@ int main (int argc, char* argv[])
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
 	char *kernel_address, *file_address;
+	void *mapped_mem;
 
 
 	strcpy(file_name, argv[1]);
@@ -58,6 +63,19 @@ int main (int argc, char* argv[])
 				write(file_fd, buf, ret); //write to the input file
 				file_size += ret;
 			}while(ret > 0);
+			break;
+		case 'm'://mmap
+			ret = 1;
+			for (i = 0; ret > 0; i += MAP_SIZE)
+			{
+				posix_fallocate(file_fd, i, MAP_SIZE);
+				mapped_mem = mmap(NULL, MAP_SIZE, PROT_WRITE, MAP_SHARED, file_fd, i); // todo: posix_fallocate
+				for (j = 0; j < MAP_SIZE && ret > 0; j += BUF_SIZE)
+				{
+					file_size += ret = read(dev_fd, mapped_mem + j, min(BUF_SIZE, MAP_SIZE - j));
+				}
+			}
+			ftruncate(file_fd, file_size);
 			break;
 	}
 
