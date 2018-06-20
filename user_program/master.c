@@ -11,19 +11,23 @@
 
 #define PAGE_SIZE 4096
 #define BUF_SIZE 512
+#define MAP_SIZE (PAGE_SIZE * 10)
 size_t get_filesize(const char* filename);//get the size of the input file
+int min(int a, int b) { return a < b ? a : b; }
 
 
 int main (int argc, char* argv[])
 {
 	char buf[BUF_SIZE];
-	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
+	int i, j, dev_fd, file_fd;// the fd for the device and the fd for the input file
 	size_t ret, file_size, offset = 0, tmp;
 	char file_name[50], method[20];
 	char *kernel_address = NULL, *file_address = NULL;
 	struct timeval start;
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
+	void *mapped_mem;
+	int len;
 
 
 	strcpy(file_name, argv[1]);
@@ -65,6 +69,16 @@ int main (int argc, char* argv[])
 				write(dev_fd, buf, ret);//write to the the device
 			}while(ret > 0);
 			break;
+		case 'm':
+			for (i = 0; i < file_size; i += MAP_SIZE)
+			{
+				len = min(MAP_SIZE, file_size - i);
+				mapped_mem = mmap(NULL, len, PROT_READ, MAP_SHARED, file_fd, 0);
+				for (j = 0; j < len; j += BUF_SIZE)
+					write(dev_fd, mapped_mem + j, min(BUF_SIZE, len - j));
+				printf("send\n");
+			}
+			break;
 	}
 
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
@@ -74,7 +88,7 @@ int main (int argc, char* argv[])
 	}
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.0001;
-	printf("Transmission time: %lf ms, File size: %d bytes\n", trans_time, file_size / 8);
+	printf("Transmission time: %lf ms, File size: %ld bytes\n", trans_time, file_size / 8);
 
 	close(file_fd);
 	close(dev_fd);

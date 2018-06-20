@@ -9,4 +9,6 @@ master_device/.*
 slave_device/.*
 user_program/master
 user_program/slave
-
+user_program/.master.c.swp
+user_program/.slave.c.swp
+user_program/temp
