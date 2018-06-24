@@ -27,7 +27,7 @@ int main (int argc, char* argv[])
 	struct timeval start;
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
-	void *mapped_mem;
+	void *mapped_mem, *kernel_mem;
 	int len;
 
 
@@ -75,11 +75,13 @@ int main (int argc, char* argv[])
 			{
 				len = min(MAP_SIZE, file_size - i);
 				mapped_mem = mmap(NULL, len, PROT_READ, MAP_SHARED, file_fd, i);
-				for (j = 0; j < len; j += BUF_SIZE)
-					write(dev_fd, mapped_mem + j, min(BUF_SIZE, len - j));
+				kernel_mem = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, dev_fd, i);
+				memcpy(kernel_mem, mapped_mem, len);
+				ioctl(dev_fd, 0x12345678, len);
 			}
 			break;
 	}
+	//ioctl(dev_fd, 0x111);
 
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
 	{
