@@ -27,7 +27,7 @@ int main (int argc, char* argv[])
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
 	char *kernel_address, *file_address;
-	void *mapped_mem;
+	void *mapped_mem, *kernel_mem;
 
 
 	strcpy(file_name, argv[1]);
@@ -69,13 +69,14 @@ int main (int argc, char* argv[])
 			for (i = 0; ret > 0; i += MAP_SIZE)
 			{
 				posix_fallocate(file_fd, i, MAP_SIZE);
-				mapped_mem = mmap(NULL, MAP_SIZE, PROT_WRITE, MAP_SHARED, file_fd, i); // todo: posix_fallocate
-				for (j = 0; j < MAP_SIZE && ret > 0; j += BUF_SIZE)
-				{
-					file_size += ret = read(dev_fd, mapped_mem + j, min(BUF_SIZE, MAP_SIZE - j));
-				}
+				mapped_mem = mmap(NULL, MAP_SIZE, PROT_WRITE, MAP_SHARED, file_fd, i);
+				kernel_mem = mmap(NULL, MAP_SIZE, PROT_READ, MAP_SHARED, dev_fd, i);
+				ret = ioctl(dev_fd, 0x12345678);
+				memcpy(mapped_mem, kernel_mem, ret);
+				file_size += ret;
 			}
 			ftruncate(file_fd, file_size);
+			ioctl(dev_fd, 0x111, kernel_mem);
 			break;
 	}
 
