@@ -65,16 +65,15 @@ int main (int argc, char* argv[])
 			}while(ret > 0);
 			break;
 		case 'm'://mmap
-			ret = 1;
-			for (i = 0; ret > 0; i += MAP_SIZE)
+			do
 			{
-				posix_fallocate(file_fd, i, MAP_SIZE);
-				mapped_mem = mmap(NULL, MAP_SIZE, PROT_WRITE, MAP_SHARED, file_fd, i);
-				kernel_mem = mmap(NULL, MAP_SIZE, PROT_READ, MAP_SHARED, dev_fd, i);
+				posix_fallocate(file_fd, file_size, MAP_SIZE);
+				mapped_mem = mmap(NULL, MAP_SIZE, PROT_WRITE, MAP_SHARED, file_fd, file_size);
+				kernel_mem = mmap(NULL, MAP_SIZE, PROT_READ, MAP_SHARED, dev_fd, 0);
 				ret = ioctl(dev_fd, 0x12345678);
 				memcpy(mapped_mem, kernel_mem, ret);
 				file_size += ret;
-			}
+			} while(ret > 0);
 			ftruncate(file_fd, file_size);
 			ioctl(dev_fd, 0x111, kernel_mem);
 			break;
@@ -89,7 +88,7 @@ int main (int argc, char* argv[])
 	}
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.0001;
-	printf("Transmission time: %lf ms, File size: %ld bytes\n", trans_time, file_size / 8);
+	printf("Slave: Transmission time: %lf ms, File size: %ld bytes\n", trans_time, file_size / 8);
 
 
 	close(file_fd);
