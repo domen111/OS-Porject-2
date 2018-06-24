@@ -79,9 +79,9 @@ int main (int argc, char* argv[])
 				memcpy(kernel_mem, mapped_mem, len);
 				ioctl(dev_fd, 0x12345678, len);
 			}
+			ioctl(dev_fd, 0x111, kernel_mem);
 			break;
 	}
-	//ioctl(dev_fd, 0x111);
 
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
 	{
